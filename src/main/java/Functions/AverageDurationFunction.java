@@ -17,7 +17,7 @@ public class AverageDurationFunction implements SleepAnalysisFunction {
 
         return new SleepAnalyticsResult(
                 "Средняя продолжительность сна (в минута)",
-                averageDuration
+                String.format("%.1s", averageDuration)
         );
     }
 }
