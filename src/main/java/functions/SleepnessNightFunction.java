@@ -6,11 +6,9 @@ import ru.yandex.practicum.sleeptracker.SleepSession;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class SleepnessNightFunction implements SleepAnalysisFunction {
     @Override
