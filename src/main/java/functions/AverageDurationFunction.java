@@ -1,4 +1,4 @@
-package Functions;
+package functions;
 
 import ru.yandex.practicum.sleeptracker.SleepAnalysisFunction;
 import ru.yandex.practicum.sleeptracker.SleepAnalyticsResult;
@@ -6,17 +6,17 @@ import ru.yandex.practicum.sleeptracker.SleepSession;
 
 import java.util.List;
 
-public class MaxDurationFunction implements SleepAnalysisFunction {
+public class AverageDurationFunction implements SleepAnalysisFunction {
     @Override
     public SleepAnalyticsResult analyze(List<SleepSession> sessions) {
-        long maxDuration = sessions.stream()
+        double averageDuration = sessions.stream()
                 .mapToLong(SleepSession::getDurationMinutes)
-                .max()
-                .orElse(0);
+                .average()
+                .orElse(0.0);
 
         return new SleepAnalyticsResult(
-                "Максимальная продолжительность сессии (в минутах)",
-                maxDuration
+                "Средняя продолжительность сна (в минута)",
+                String.format("%.1s", averageDuration)
         );
     }
 }

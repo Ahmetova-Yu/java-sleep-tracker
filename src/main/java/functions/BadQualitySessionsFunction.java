@@ -1,4 +1,4 @@
-package Functions;
+package functions;
 
 import ru.yandex.practicum.sleeptracker.SleepAnalysisFunction;
 import ru.yandex.practicum.sleeptracker.SleepAnalyticsResult;
