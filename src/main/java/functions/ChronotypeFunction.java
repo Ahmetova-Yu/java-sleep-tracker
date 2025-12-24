@@ -4,6 +4,7 @@ import ru.yandex.practicum.sleeptracker.SleepAnalysisFunction;
 import ru.yandex.practicum.sleeptracker.SleepAnalyticsResult;
 import ru.yandex.practicum.sleeptracker.SleepSession;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,7 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
     public SleepAnalyticsResult analyze(List<SleepSession> sessions) {
         List<SleepSession> validNightSessions = sessions.stream()
                 .filter(session -> session.getDurationMinutes() >= 60)
-                .filter(this::isNightSession)
+                .filter(this::intersectsMidnightToSix)
                 .toList();
 
         if (validNightSessions.isEmpty()) {
@@ -50,10 +51,20 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
         return new SleepAnalyticsResult("Хронотип пользователя", predominantChronotype);
     }
 
-    private boolean isNightSession(SleepSession session) {
-        int sleepHour = session.getSleepTime().getHour();
+    private boolean intersectsMidnightToSix(SleepSession session) {
+        LocalDateTime sleepTime = session.getSleepTime();
+        LocalDateTime wakeTime = session.getWakeTime();
 
-        return sleepHour >= 18 || sleepHour < 6;
+        return sleepTime.toLocalDate()
+                .datesUntil(wakeTime.toLocalDate().plusDays(1))
+                .anyMatch(date -> intersectsNight(sleepTime, wakeTime, date));
+    }
+
+    private boolean intersectsNight(LocalDateTime sleepTime, LocalDateTime wakeTime, java.time.LocalDate date) {
+        LocalDateTime nightStart = date.atTime(0, 0);
+        LocalDateTime nightEnd = date.atTime(6, 0);
+
+        return !(wakeTime.isBefore(nightStart) || sleepTime.isAfter(nightEnd));
     }
 
     private Chronotype classifyNight(SleepSession session) {
@@ -64,7 +75,6 @@ public class ChronotypeFunction implements SleepAnalysisFunction {
 
         if (sleepTime.getHour() >= 0 && sleepTime.getHour() <= 6) {
             isNightBird = wakeTime.isAfter(LocalTime.of(9, 0));
-
         } else {
             isNightBird = sleepTime.isAfter(LocalTime.of(23, 0)) &&
                     wakeTime.isAfter(LocalTime.of(9, 0));

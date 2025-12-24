@@ -6,9 +6,10 @@ import ru.yandex.practicum.sleeptracker.SleepSession;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SleepnessNightFunction implements SleepAnalysisFunction {
     @Override
@@ -24,35 +25,34 @@ public class SleepnessNightFunction implements SleepAnalysisFunction {
             firstDate = firstDate.plusDays(1);
         }
 
-        Set<LocalDate> allNights = new HashSet<>();
-        LocalDate currentDate = firstDate;
-        while (!currentDate.isAfter(lastDate)) {
-            allNights.add(currentDate);
-            currentDate = currentDate.plusDays(1);
-        }
+        Set<LocalDate> allNights = Stream.iterate(firstDate, date -> !date.isAfter(lastDate), date -> date.plusDays(1))
+                .collect(Collectors.toSet());
 
-        Set<LocalDate> nightsWithSleep = new HashSet<>();
-        for (SleepSession session : sessions) {
-            LocalDateTime sleepTime = session.getSleepTime();
-            LocalDateTime wakeTime = session.getWakeTime();
+        Set<LocalDate> nightsWithSleep = sessions.stream()
+                .flatMap(session -> {
+                    LocalDateTime sleepTime = session.getSleepTime();
+                    LocalDateTime wakeTime = session.getWakeTime();
 
-            LocalDate date = sleepTime.toLocalDate();
-            while (!date.isAfter(wakeTime.toLocalDate())) {
-
-                LocalDateTime nightStart = date.atTime(0, 0);
-                LocalDateTime nightEnd = date.atTime(6, 0);
-
-                if (!(wakeTime.isBefore(nightStart) || sleepTime.isAfter(nightEnd))) {
-                    nightsWithSleep.add(date);
-                }
-                date = date.plusDays(1);
-            }
-        }
+                    return Stream.iterate(
+                                    sleepTime.toLocalDate(),
+                                    date -> !date.isAfter(wakeTime.toLocalDate()),
+                                    date -> date.plusDays(1)
+                            )
+                            .filter(date -> intersectsNight(sleepTime, wakeTime, date));
+                })
+                .collect(Collectors.toSet());
 
         long sleeplessNights = allNights.stream()
                 .filter(night -> !nightsWithSleep.contains(night))
                 .count();
 
         return new SleepAnalyticsResult("Количество бессонных ночей", sleeplessNights);
+    }
+
+    private boolean intersectsNight(LocalDateTime sleepTime, LocalDateTime wakeTime, LocalDate date) {
+        LocalDateTime nightStart = date.atTime(0, 0);
+        LocalDateTime nightEnd = date.atTime(6, 0);
+
+        return !(wakeTime.isBefore(nightStart) || sleepTime.isAfter(nightEnd));
     }
 }
